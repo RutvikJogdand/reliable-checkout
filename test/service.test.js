@@ -128,6 +128,19 @@ test('a database failure AFTER inventory and order writes rolls back stock, coup
   assert.equal(s.checkout(cart.id, 'rollback-key', { couponCode: coupon.code }).replayed, false);
 });
 
+test('automatic SQLite rollback preserves the original failure and leaves the connection reusable', t => {
+  const { db, service: s } = setup(t);
+  const cart = populated(s);
+  db.exec(`CREATE TRIGGER automatic_rollback BEFORE INSERT ON order_items
+    BEGIN SELECT RAISE(ROLLBACK, 'original automatic rollback failure'); END;`);
+  assert.throws(() => s.checkout(cart.id, 'automatic-rollback-key'), /original automatic rollback failure/);
+  assert.equal(db.isTransaction, false);
+  assert.equal(s.report().totalSuccessfullyPlacedOrders, 0);
+  assert.equal(s.listProducts().find(p => p.id === 'sticker').availableInventory, 200);
+  db.exec('DROP TRIGGER automatic_rollback');
+  assert.equal(s.checkout(cart.id, 'automatic-rollback-key').replayed, false);
+});
+
 test('reports reconcile with returned orders and coupons', t => {
   const { service: s } = setup(t, { rewardEvery: 1 });
   s.checkout(populated(s, 'coffee', 2).id, 'first');

@@ -235,7 +235,8 @@ export function createService(db) {
       fields(body, ['name', 'unitPriceMinor', 'availableInventory']);
       check(Object.keys(body).length > 0, 400, 'INVALID_INPUT', 'Provide at least one field to update.');
       if (Object.hasOwn(body, 'name')) {
-        check(typeof body.name === 'string' && body.name.trim().length > 0 && body.name.length <= 100,
+        check(typeof body.name === 'string' && body.name.trim().length > 0 && body.name.length <= 100
+          && !body.name.includes('\0'),
           400, 'INVALID_INPUT', 'name must contain 1–100 characters and must not be blank.');
       }
       if (Object.hasOwn(body, 'unitPriceMinor')) parseUnitPrice(body.unitPriceMinor);

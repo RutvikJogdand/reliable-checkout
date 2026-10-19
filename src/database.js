@@ -15,7 +15,9 @@ export function transaction(db, work, { readOnly = false } = {}) {
     db.exec('COMMIT');
     return result;
   } catch (error) {
-    db.exec('ROLLBACK');
+    // SQLite may already have rolled back (for example RAISE(ROLLBACK)).
+    // A second ROLLBACK would hide the original, useful error.
+    if (db.isTransaction) db.exec('ROLLBACK');
     throw error;
   }
 }
