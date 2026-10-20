@@ -26,7 +26,7 @@ the service transaction rather than a simple row CHECK.
 ## Decision 1: Persistent SQLite and a small Node.js stack
 
 **Context:** Persistence, concurrency and repeatable setup matter more than
-framework breadth within a 4â€“6 hour timebox.
+framework breadth within a 4-6 hour timebox.
 
 **Options considered:** In-memory maps plus a mutex; PostgreSQL with a pool;
 SQLite with a third-party driver; Node.js 24's built-in SQLite. Express or
