@@ -167,16 +167,22 @@ test('reports reconcile with returned orders and coupons', t => {
 
 test('successful keys, inventory and snapshots survive restart; seed does not restock', t => {
   const directory = mkdtempSync(join(tmpdir(), 'checkout-persistence-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  // t.after(() => rmSync(directory, { recursive: true, force: true }));
   const options = { path: join(directory, 'db.sqlite'), rewardEvery: 1 };
-  let db = openDatabase(options);
+  let db;
+  t.after(() => {
+    if (db?.isOpen) db.close();
+    
+    rmSync(directory, { recursive: true, force: true });
+  });
+  db = openDatabase(options);
   let s = createService(db);
   const cart = populated(s, 'lamp');
   const first = s.checkout(cart.id, 'durable-key');
   const coupon = s.generateCoupon();
   db.close();
   db = openDatabase(options);
-  t.after(() => db.close());
+  // t.after(() => db.close());
   s = createService(db);
   assert.deepEqual(s.checkout(cart.id, 'durable-key'), { ...first, replayed: true });
   assert.equal(s.listProducts().find(p => p.id === 'lamp').availableInventory, 0);

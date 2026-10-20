@@ -26,7 +26,7 @@ the service transaction rather than a simple row CHECK.
 ## Decision 1: Persistent SQLite and a small Node.js stack
 
 **Context:** Persistence, concurrency and repeatable setup matter more than
-framework breadth within a 4–6 hour timebox.
+framework breadth within a 4â€“6 hour timebox.
 
 **Options considered:** In-memory maps plus a mutex; PostgreSQL with a pool;
 SQLite with a third-party driver; Node.js 24's built-in SQLite. Express or
@@ -292,25 +292,43 @@ Keep snapshot pricing. Introduce a quote/version if customers must confirm price
 changes. Real payments need the separate lifecycle above, not another `await`
 inserted into the current checkout transaction.
 
-## AI use and a concrete correction
+## AI use, personal validation and concrete corrections
 
-ChatGPT/Codex helped interpret the brief, choose the architecture, write the
-service/tests/docs and execute verification. Validation included HTTP calls,
-separate SQLite connections, restart tests and injected SQL failures. No private
-transcripts are included.
+ChatGPT/Codex helped interpret the brief and choose the architecture, generated
+the initial service, tests and documentation, and ran verification during the
+initial implementation. I also used it for code explanations and debugging
+assistance. No private transcripts are included.
 
-**Correction during AI-assisted review:** The initial generated transaction
-helper unconditionally called `ROLLBACK` in its catch block. Review identified
-that SQLite may already have rolled back. A regression test used
-`RAISE(ROLLBACK, 'original automatic rollback failure')`. The original code
-failed by replacing that error with `cannot rollback - no transaction is active`.
-The helper now checks `db.isTransaction` first. The test passed after the fix,
-also verifying unchanged stock, no order and a usable connection for retry.
-This is a separate Git commit after implementation and concurrency tests.
+My work so far has included setting up and running the project on Windows,
+beginning an implementation walkthrough, running the automated suite, applying
+the cleanup correction below with assistance, and manually checking the product
+catalog and cart-creation endpoint. Approximate active time spent is **4 hours**,
+as recorded in `README.md`; further planned review is not counted as completed
+work. My deeper review of the checkout transaction, idempotency and concurrency
+paths is ongoing.
 
-The correction was made within AI-assisted work; it is not claimed as a
-candidate-discovered bug. Candidate independent review and explanation remain
-before submission. The learning guide provides an exercise to reproduce it.
+**Correction from my local validation:** The persistence/restart test failed on
+Windows with `EPERM` while removing its temporary directory. Two cleanup hooks
+were registered in the wrong order: directory deletion was attempted before
+the reopened SQLite connection was closed. Windows blocked deletion while the
+database files were still open.
+
+With AI assistance, I replaced the separate hooks with one cleanup hook that
+closes the current database connection, if open, before removing the directory.
+The hook is registered before the first database open so cleanup also runs if
+setup or an assertion fails. Re-running `npm test` on Windows with Node.js
+**v24.19.0** produced **20 passed, 0 failed**.
+
+**Earlier correction during AI-assisted implementation:** The initial generated
+transaction helper unconditionally called `ROLLBACK` in its catch block, which
+could mask an original failure if SQLite had already rolled back automatically.
+A regression test used
+`RAISE(ROLLBACK, 'original automatic rollback failure')` and exposed the error
+being replaced with `cannot rollback - no transaction is active`. The helper now
+checks `db.isTransaction` before rolling back. The test verifies preservation of
+the original error, unchanged stock, no order and a usable connection for retry.
+This correction and its regression test were produced during the AI-assisted
+implementation.
 
 ## If given another two hours
 
@@ -321,10 +339,6 @@ before submission. The learning guide provides an exercise to reproduce it.
    is required, then test the agreed conflict behavior.
 3. Add paginated order/coupon listing and a small CI job for the existing suite.
    Inspect query plans/report latency before introducing cached counters.
-
-Before submission, prioritize candidate understanding over optional features:
-trace checkout, predict the race outcomes, reproduce the rollback correction,
-and make one deliberate business-rule change with an appropriate test.
 
 ## Primary references
 

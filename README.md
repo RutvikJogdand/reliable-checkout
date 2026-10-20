@@ -12,7 +12,7 @@ major is deliberately bounded in `package.json`; Node 18/20 will not run this
 project. The built-in SQLite API was marked active development in Node 24.0 and
 some Node 24 versions may print an experimental warning.
 
-From the extracted `reliable-checkout` directory:
+From the project root (the directory containing `package.json`):
 
 ```sh
 node --version
@@ -54,8 +54,6 @@ seeded dataset without deleting the existing one.
 | --- | --- |
 | [docs/API.md](docs/API.md) | Every endpoint, body, response, status and important error |
 | [DECISIONS.md](DECISIONS.md) | Invariants, ambiguities, alternatives, trade-offs and AI disclosure |
-| [docs/LEARNING_GUIDE.md](docs/LEARNING_GUIDE.md) | Guided reading, checkout walkthrough and interview exercises |
-| [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) | Remaining candidate review and repository publication steps |
 | [src/service.js](src/service.js) | Business rules; start at `checkout()` |
 | [src/database.js](src/database.js) | Transaction boundary, initialization and seed |
 | [src/schema.sql](src/schema.sql) | Database constraints and relationships |
@@ -116,21 +114,30 @@ historical pricing, exact money, report reconciliation, and database failures
 after partial checkout writes. The concurrency tests use separate event loops
 and SQLite connections; they do not rely only on one Node.js event loop.
 
-## Scope and submission status
+## Local verification
 
-The required backend behavior, tests, API documentation, design decisions and
-incremental local Git history are implemented. Real payments, authentication,
-customer-specific rewards, distributed deployment, pagination and a frontend
-are intentionally deferred; see `DECISIONS.md`.
+On Windows with Node.js **v24.19.0**, `npm test` completed with **20 passed,
+0 failed** after correcting the persistence test's cleanup order. I also started
+the service and manually checked the product catalog and cart creation. The
+cleanup correction and AI assistance are described in `DECISIONS.md`.
 
-This is an AI-assisted first implementation. Candidate code review, learning,
-personal explanation of the decisions, and publication to a candidate-owned
-Git repository remain. No remote repository has been created or pushed.
+## Scope
 
-Approximate initial AI-assisted implementation, testing and documentation time:
-**30 minutes** in the 19 October 2026 working session. Candidate study and
-independent review have not been measured or completed; add that time before
-submission. See `docs/SUBMISSION_CHECKLIST.md`.
+The required backend functionality, tests, API documentation and design decisions
+are implemented. Real payments, authentication, customer-specific rewards,
+distributed deployment, pagination and a frontend are intentionally deferred;
+see `DECISIONS.md`.
+
+## Time spent and AI assistance
+
+**Approximate active time spent: 4 hours so far**, including local setup, initial
+implementation review, automated test runs, debugging with assistance, and manual
+API checks. Planned further review is not included in this estimate.
+
+ChatGPT/Codex generated the initial service, tests and documentation and helped
+with design discussions, code explanations and debugging. My deeper code review
+is ongoing. `DECISIONS.md` describes the AI contribution and the work I personally
+validated.
 
 ## Primary references
 
